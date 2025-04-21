@@ -7,7 +7,7 @@ It uses the official exchange rates from the [National Bank of Kazakhstan](https
 
 ## 🚀 Try it Live
 
-👉 [**Launch App on GitHub Pages**](https://your-username.github.io/your-repo-name/)  
+👉 [**Launch App on GitHub Pages**](https://dreamerview.github.io/kz-currency-converter-app/)  
 _(← replace with your actual GitHub username and repo name)_
 
 ---
