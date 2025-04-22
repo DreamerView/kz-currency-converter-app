@@ -5,25 +5,40 @@
   <title>Конвертер валют НБ РК</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0" defer></script>
   <style>
     body { padding: 2rem; }
+    .currency-suffix {
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 1; }
+    }
+
+    #loading {
+      animation: fadeInOut 1.5s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="bg-light container d-flex flex-column justify-content-center align-items-center">
 
   <h2 class="text-center mt-5 m-0">💱 Конвертер валют НБ РК</h2>
 
-  <div class="row mt-4 pt-5 mx-auto" id="converter" style="max-width: 600px;width:100%;">
+  <h5 class="m-0 my-5 text-center lh-lg" id="loading" style="max-width: 550px;width:100%;">Загрузка курсов валют. Пожалуйста, подождите — поле появится автоматически после загрузки.</h5>
+
+  <div id="response" class="row mt-4 pt-5 mx-auto d-none" id="converter" style="max-width: 550px;width:100%;">
     <div class="col-12 mb-4">
         <label class="form-label">Сумма</label>
-        <input id="amount" type="number" class="form-control" placeholder="Например, 100">
+        <input id="amount" type="text" class="form-control fs-5" placeholder="Например, 100">
     </div>
     <div class="col-5">
         <label class="form-label">Из</label>
         <select id="fromCurrency" class="form-select"></select>
     </div>
     <div class="col-2 d-flex justify-content-center align-items-end">
-        <button class="btn btn-secondary w-100" onclick="swapCurrencies()">↔</button>
+        <button class="btn btn-secondary rounded-5 w-100" onclick="swapCurrencies()">↔</button>
     </div>
     <div class="col-5">
         <label class="form-label">В</label>
@@ -31,7 +46,10 @@
     </div>
     <div class="col-12 mt-4">
         <label class="form-label">Результат</label>
-        <div class="form-control bg-body-secondary" id="result">—</div>
+        <div class="form-control bg-body-secondary d-flex justify-content-between align-items-center fs-5">
+          <span id="result">0.00</span>
+          <span class="currency-suffix" id="currencyLabel">KZT</span>
+        </div>
     </div>
     <div class="col-12 mt-5 d-flex flex-column align-items-center">
         <p class="m-0 text-center">Данные получены с сайта</p>
@@ -46,57 +64,58 @@
   <script>
     const currencyMap = {};
     const currencyNames = {
-      "AUD": "Австралийский доллар 🇦🇺",
-      "AZN": "Азербайджанский манат 🇦🇿",
-      "AMD": "Армянский драм 🇦🇲",
-      "BYN": "Белорусский рубль 🇧🇾",
-      "BRL": "Бразильский реал 🇧🇷",
-      "HUF": "Венгерский форинт 🇭🇺",
-      "HKD": "Гонконгский доллар 🇭🇰",
-      "GEL": "Грузинский лари 🇬🇪",
-      "DKK": "Датская крона 🇩🇰",
-      "AED": "Дирхам ОАЭ 🇦🇪",
-      "USD": "Доллар США 🇺🇸",
-      "EUR": "Евро 🇪🇺",
-      "INR": "Индийская рупия 🇮🇳",
-      "IRR": "Иранский риал 🇮🇷",
-      "CAD": "Канадский доллар 🇨🇦",
-      "CNY": "Китайский юань 🇨🇳",
-      "KWD": "Кувейтский динар 🇰🇼",
-      "KGS": "Киргизский сом 🇰🇬",
-      "MYR": "Малайзийский ринггит 🇲🇾",
-      "MXN": "Мексиканское песо 🇲🇽",
-      "MDL": "Молдавский лей 🇲🇩",
-      "NOK": "Норвежская крона 🇳🇴",
-      "PLN": "Польский злотый 🇵🇱",
-      "SAR": "Саудовский риял 🇸🇦",
-      "RUB": "Российский рубль 🇷🇺",
-      "XDR": "СДР (спецправа) 🌐",
-      "SGD": "Сингапурский доллар 🇸🇬",
-      "TJS": "Таджикский сомони 🇹🇯",
-      "THB": "Тайский бат 🇹🇭",
-      "TRY": "Турецкая лира 🇹🇷",
-      "UZS": "Узбекский сум 🇺🇿",
-      "UAH": "Украинская гривна 🇺🇦",
-      "GBP": "Фунт стерлингов 🇬🇧",
-      "CZK": "Чешская крона 🇨🇿",
-      "SEK": "Шведская крона 🇸🇪",
-      "CHF": "Швейцарский франк 🇨🇭",
-      "ZAR": "Южноафриканский рэнд 🇿🇦",
-      "KRW": "Южнокорейская вона 🇰🇷",
-      "JPY": "Японская иена 🇯🇵",
-      "KZT": "Казахстанский тенге 🇰🇿"
-    };
+  "AUD": "Австралийский доллар 🇦🇺",
+  "AZN": "Азербайджанский манат 🇦🇿",
+  "AMD": "Армянский драм 🇦🇲",
+  "BYN": "Белорусский рубль 🇧🇾",
+  "BRL": "Бразильский реал 🇧🇷",
+  "HUF": "Венгерский форинт 🇭🇺",
+  "HKD": "Гонконгский доллар 🇭🇰",
+  "GEL": "Грузинский лари 🇬🇪",
+  "DKK": "Датская крона 🇩🇰",
+  "AED": "Дирхам ОАЭ 🇦🇪",
+  "USD": "Доллар США 🇺🇸",
+  "EUR": "Евро 🇪🇺",
+  "INR": "Индийская рупия 🇮🇳",
+  "IRR": "Иранский риал 🇮🇷",
+  "CAD": "Канадский доллар 🇨🇦",
+  "CNY": "Китайский юань 🇨🇳",
+  "KWD": "Кувейтский динар 🇰🇼",
+  "KGS": "Киргизский сом 🇰🇬",
+  "MYR": "Малайзийский ринггит 🇲🇾",
+  "MXN": "Мексиканское песо 🇲🇽",
+  "MDL": "Молдавский лей 🇲🇩",
+  "NOK": "Норвежская крона 🇳🇴",
+  "PLN": "Польский злотый 🇵🇱",
+  "SAR": "Саудовский риял 🇸🇦",
+  "RUB": "Российский рубль 🇷🇺",
+  "XDR": "СДР (спецправа) 🌐",
+  "SGD": "Сингапурский доллар 🇸🇬",
+  "TJS": "Таджикский сомони 🇹🇯",
+  "THB": "Тайский бат 🇹🇭",
+  "TRY": "Турецкая лира 🇹🇷",
+  "UZS": "Узбекский сум 🇺🇿",
+  "UAH": "Украинская гривна 🇺🇦",
+  "GBP": "Фунт стерлингов 🇬🇧",
+  "CZK": "Чешская крона 🇨🇿",
+  "SEK": "Шведская крона 🇸🇪",
+  "CHF": "Швейцарский франк 🇨🇭",
+  "ZAR": "Южноафриканский рэнд 🇿🇦",
+  "KRW": "Южнокорейская вона 🇰🇷",
+  "JPY": "Японская иена 🇯🇵",
+  "KZT": "Казахстанский тенге 🇰🇿"
+};
+
+    let amountInput, resultOutput;
 
     const updateResult = () => {
-      const amount = parseFloat(document.getElementById("amount").value);
+      const amount = parseFloat(amountInput.rawValue.replace(/\s/g, ''));
       const from = document.getElementById("fromCurrency").value;
       const to = document.getElementById("toCurrency").value;
-      const resultBox = document.getElementById("result");
-
-      if (!from || !to || isNaN(amount)) return resultBox.textContent = "—";
+      document.getElementById("currencyLabel").textContent = to;
+      if (!from || !to || isNaN(amount)) return resultOutput.set(0);
       const converted = amount * (currencyMap[from] / currencyMap[to]);
-      resultBox.textContent = `${converted.toFixed(2)} ${to}`;
+      resultOutput.set(converted);
     };
 
     const swapCurrencies = () => {
@@ -107,10 +126,27 @@
     };
 
     const loadCurrency = async () => {
-      const res = await fetch("https://api.allorigins.win/raw?url=https://nationalbank.kz/rss/rates_all.xml");
-      const xml = await res.text();
-      renderCurrency(xml);
-      document.getElementById("saveBtn").classList.remove("d-none");
+      try {
+        const res = await fetch("https://api.allorigins.win/raw?url=https://nationalbank.kz/rss/rates_all.xml");
+        const xml = await res.text();
+        localStorage.setItem("currency", xml);
+        localStorage.setItem("currency_time", new Date().toISOString());
+        renderCurrency(xml);
+        showOfflineNotice(false);
+      } catch (e) {
+        const cached = localStorage.getItem("currency");
+        const cachedTime = localStorage.getItem("currency_time");
+        if (cached && cachedTime) {
+          renderCurrency(cached);
+          showOfflineNotice(true, cachedTime);
+        } else {
+          alert("Нет подключения к интернету и нет сохранённого курса валют.");
+        }
+      }
+      finally {
+        document.getElementById("loading").classList.add("d-none");
+        document.getElementById("response").classList.remove("d-none");
+      }
     };
 
     const renderCurrency = xmlStr => {
@@ -142,37 +178,44 @@
 
       fromSelect.value = "KZT";
       toSelect.value = "USD";
-      document.getElementById("converter").classList.remove("d-none");
+      document.getElementById("currencyLabel").textContent = "USD";
       updateResult();
     };
 
-    const saveCurrency = () => {
-      fetch("https://api.allorigins.win/raw?url=https://nationalbank.kz/rss/rates_all.xml")
-        .then(res => res.text())
-        .then(xml => {
-          localStorage.setItem("currency", xml);
-          alert("Курсы сохранены в браузере!");
-          document.getElementById("clearBtn").classList.remove("d-none");
-        });
-    };
-
-    const clearCurrency = () => {
-      localStorage.removeItem("currency");
-      alert("Сохранённые курсы удалены.");
-      document.getElementById("clearBtn").classList.add("d-none");
-    };
+    window.addEventListener("load", () => {
+      loadCurrency();
+      amountInput = new AutoNumeric("#amount", {
+        digitGroupSeparator: ' ',
+        decimalCharacter: '.',
+        decimalPlaces: 2
+      });
+      resultOutput = new AutoNumeric("#result", {
+        readOnly: true,
+        watchExternalChanges: true,
+        digitGroupSeparator: ' ',
+        decimalCharacter: '.',
+        decimalPlaces: 2
+      });
+    });
 
     document.getElementById("fromCurrency").addEventListener("change", updateResult);
     document.getElementById("toCurrency").addEventListener("change", updateResult);
     document.getElementById("amount").addEventListener("input", updateResult);
 
-    const saved = localStorage.getItem("currency");
-    if (saved) {
-      renderCurrency(saved);
-      document.getElementById("clearBtn").classList.remove("d-none");
+    function showOfflineNotice(offline, time) {
+      let notice = document.getElementById("offlineNotice");
+      if (!notice) {
+        notice = document.createElement("div");
+        notice.id = "offlineNotice";
+        notice.className = "alert alert-warning text-center mt-3";
+        document.getElementById("converter").prepend(notice);
+      }
+      notice.style.display = offline ? 'block' : 'none';
+      if (offline) {
+        const d = new Date(time);
+        notice.textContent = `⚠️ Вы офлайн. Используются данные от ${d.toLocaleString()}`;
+      }
     }
-    
-    window.addEventListener("load",loadCurrency)
   </script>
 </body>
 </html>
