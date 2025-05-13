@@ -10,10 +10,10 @@
   <meta name="theme-color" content="#e2e3e5">
 
   <!-- iOS поддержка -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Currency Converter">
-  <link rel="apple-touch-icon" href="/icon512_maskable.png">
+  <link rel="apple-touch-icon" href="/icon192_maskable.png">
   <style>
     body { padding: 2rem; }
     .currency-suffix {
@@ -36,14 +36,11 @@
 
   <h5 class="m-0 my-5 text-center lh-lg" id="loading" style="max-width: 550px;width:100%;">Загрузка курсов валют. Пожалуйста, подождите — поле появится автоматически после загрузки.</h5>
 
-  <div id="response" class="row mt-4 pt-5 mx-auto d-none" id="converter" style="max-width: 550px;width:100%;">
-    <div class="col-12 mb-4">
-      <div class="alert alert-primary d-flex align-items-center" role="alert">
-        <svg xmlns="http://www.w3.org/2000/svg" class="bi flex-shrink-0 me-2" viewBox="0 0 16 16" role="img" aria-label="Warning:">
-          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-        </svg>
-        <div>
-          An example alert with an icon
+  <div id="response" class="row pt-5 mx-auto d-none" id="converter" style="max-width: 550px;width:100%;">
+    <div id="render-alert-offline" class="d-none col-12 mb-4">
+      <div class="alert alert-danger rounded-4 d-flex align-items-center" role="alert">
+        <div id="render-offline">
+          <h5 class="m-0">⚠️ Без интернета</h5>
         </div>
       </div>
     </div>
@@ -81,165 +78,10 @@
 
     <script>
       if ('serviceWorker' in navigator) {
-        //navigator.serviceWorker.register('/sw.js');
+        navigator.serviceWorker.register('/sw.js?v=1.0.0');
       }
     </script>
 
-  <script>
-    const currencyMap = {};
-    const currencyNames = {
-  "AUD": "Австралийский доллар 🇦🇺",
-  "AZN": "Азербайджанский манат 🇦🇿",
-  "AMD": "Армянский драм 🇦🇲",
-  "BYN": "Белорусский рубль 🇧🇾",
-  "BRL": "Бразильский реал 🇧🇷",
-  "HUF": "Венгерский форинт 🇭🇺",
-  "HKD": "Гонконгский доллар 🇭🇰",
-  "GEL": "Грузинский лари 🇬🇪",
-  "DKK": "Датская крона 🇩🇰",
-  "AED": "Дирхам ОАЭ 🇦🇪",
-  "USD": "Доллар США 🇺🇸",
-  "EUR": "Евро 🇪🇺",
-  "INR": "Индийская рупия 🇮🇳",
-  "IRR": "Иранский риал 🇮🇷",
-  "CAD": "Канадский доллар 🇨🇦",
-  "CNY": "Китайский юань 🇨🇳",
-  "KWD": "Кувейтский динар 🇰🇼",
-  "KGS": "Киргизский сом 🇰🇬",
-  "MYR": "Малайзийский ринггит 🇲🇾",
-  "MXN": "Мексиканское песо 🇲🇽",
-  "MDL": "Молдавский лей 🇲🇩",
-  "NOK": "Норвежская крона 🇳🇴",
-  "PLN": "Польский злотый 🇵🇱",
-  "SAR": "Саудовский риял 🇸🇦",
-  "RUB": "Российский рубль 🇷🇺",
-  "XDR": "СДР (спецправа) 🌐",
-  "SGD": "Сингапурский доллар 🇸🇬",
-  "TJS": "Таджикский сомони 🇹🇯",
-  "THB": "Тайский бат 🇹🇭",
-  "TRY": "Турецкая лира 🇹🇷",
-  "UZS": "Узбекский сум 🇺🇿",
-  "UAH": "Украинская гривна 🇺🇦",
-  "GBP": "Фунт стерлингов 🇬🇧",
-  "CZK": "Чешская крона 🇨🇿",
-  "SEK": "Шведская крона 🇸🇪",
-  "CHF": "Швейцарский франк 🇨🇭",
-  "ZAR": "Южноафриканский рэнд 🇿🇦",
-  "KRW": "Южнокорейская вона 🇰🇷",
-  "JPY": "Японская иена 🇯🇵",
-  "KZT": "Казахстанский тенге 🇰🇿"
-};
-
-    let amountInput, resultOutput;
-
-    const updateResult = () => {
-      const amount = parseFloat(amountInput.rawValue.replace(/\s/g, ''));
-      const from = document.getElementById("fromCurrency").value;
-      const to = document.getElementById("toCurrency").value;
-      document.getElementById("currencyLabel").textContent = to;
-      if (!from || !to || isNaN(amount)) return resultOutput.set(0);
-      const converted = amount * (currencyMap[from] / currencyMap[to]);
-      resultOutput.set(converted);
-    };
-
-    const swapCurrencies = () => {
-      const from = document.getElementById("fromCurrency");
-      const to = document.getElementById("toCurrency");
-      [from.value, to.value] = [to.value, from.value];
-      updateResult();
-    };
-
-    const loadCurrency = async () => {
-      try {
-        const res = await fetch("https://api.allorigins.win/raw?url=https://nationalbank.kz/rss/rates_all.xml",{cache: "no-store"});
-        const xml = await res.text();
-        localStorage.setItem("currency", xml);
-        localStorage.setItem("currency_time", new Date().toISOString());
-        renderCurrency(xml);
-        showOfflineNotice(false);
-      } catch (e) {
-        const cached = localStorage.getItem("currency");
-        const cachedTime = localStorage.getItem("currency_time");
-        if (cached && cachedTime) {
-          renderCurrency(cached);
-          showOfflineNotice(true, cachedTime);
-        } else {
-          alert("Нет подключения к интернету и нет сохранённого курса валют.");
-        }
-      }
-      finally {
-        document.getElementById("loading").classList.add("d-none");
-        document.getElementById("response").classList.remove("d-none");
-      }
-    };
-
-    const renderCurrency = xmlStr => {
-      const xml = new DOMParser().parseFromString(xmlStr, "text/xml");
-      const items = [...xml.querySelectorAll("item")];
-      const fromSelect = document.getElementById("fromCurrency");
-      const toSelect = document.getElementById("toCurrency");
-
-      currencyMap["KZT"] = 1;
-      fromSelect.innerHTML = toSelect.innerHTML = '';
-
-      const allCodes = ["KZT"];
-
-      items.forEach(item => {
-        const code = item.querySelector("title")?.textContent;
-        const rate = parseFloat(item.querySelector("description")?.textContent);
-        const quant = parseFloat(item.querySelector("quant")?.textContent);
-        const value = rate / quant;
-        currencyMap[code] = value;
-        allCodes.push(code);
-      });
-
-      allCodes.forEach(code => {
-        const label = currencyNames[code] || code;
-        const option = `<option value="${code}" title="${label}">${label}</option>`;
-        fromSelect.innerHTML += option;
-        toSelect.innerHTML += option;
-      });
-
-      fromSelect.value = "KZT";
-      toSelect.value = "USD";
-      document.getElementById("currencyLabel").textContent = "USD";
-      updateResult();
-    };
-
-    window.addEventListener("load", () => {
-      loadCurrency();
-      amountInput = new AutoNumeric("#amount", {
-        digitGroupSeparator: ' ',
-        decimalCharacter: '.',
-        decimalPlaces: 2
-      });
-      resultOutput = new AutoNumeric("#result", {
-        readOnly: true,
-        watchExternalChanges: true,
-        digitGroupSeparator: ' ',
-        decimalCharacter: '.',
-        decimalPlaces: 2
-      });
-    });
-
-    document.getElementById("fromCurrency").addEventListener("change", updateResult);
-    document.getElementById("toCurrency").addEventListener("change", updateResult);
-    document.getElementById("amount").addEventListener("input", updateResult);
-
-    function showOfflineNotice(offline, time) {
-      let notice = document.getElementById("offlineNotice");
-      if (!notice) {
-        notice = document.createElement("div");
-        notice.id = "offlineNotice";
-        notice.className = "alert alert-warning text-center mt-3";
-        document.getElementById("converter").prepend(notice);
-      }
-      notice.style.display = offline ? 'block' : 'none';
-      if (offline) {
-        const d = new Date(time);
-        notice.textContent = `⚠️ Вы офлайн. Используются данные от ${d.toLocaleString()}`;
-      }
-    }
-  </script>
+  <script src="/main.js?v=1.0.0"></script>
 </body>
 </html>
