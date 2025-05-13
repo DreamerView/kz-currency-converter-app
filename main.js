@@ -76,7 +76,7 @@ const currencyMap = {};
           renderCurrency(cached);
           showOfflineNotice(true, cachedTime);
         } else {
-          alert("Нет подключения к интернету и нет сохранённого курса валют.");
+          document.getElementById("render-alert-no-data").classList.remove("d-none");
         }
       }
       finally {
