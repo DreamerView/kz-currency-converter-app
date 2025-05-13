@@ -1,9 +1,9 @@
 const CACHE_NAME = 'offline-cache-v3';
 const OFFLINE_URLS = [
-  '/index.html',
+  'index.html',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/autonumeric@4.6.0',
-  '/offline.html',
+  'offline.html',
 ];
 
 self.addEventListener('install', (event) => {
