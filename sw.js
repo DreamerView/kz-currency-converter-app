@@ -1,4 +1,4 @@
-const CACHE_NAME = 'offline-cache-v4';
+const CACHE_NAME = 'offline-cache-v5';
 const OFFLINE_URLS = [
   'index.html',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
