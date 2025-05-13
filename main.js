@@ -142,6 +142,6 @@ const currencyMap = {};
       if (offline) {
         document.getElementById("render-alert-offline").classList.remove("d-none");
         const d = new Date(time);
-        document.getElementById("render-offline").innerHTML = `<h5>⚠️ Без интернета</h5><p class="m-0">Данные от ${d.toLocaleDateString()}</p>`;
+        document.getElementById("render-offline").innerHTML = `<h5>⚠️ Без интернета</h5><p class="m-0">Данные от ${d.toLocaleString()}</p>`;
       }
     }
