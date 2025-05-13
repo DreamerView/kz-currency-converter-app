@@ -20,16 +20,19 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Пропускаем chrome-extension, devtools, или другие неподдерживаемые схемы
-  if (url.protocol === 'chrome-extension:' || url.protocol === 'devtools:') return;
-
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('/index.html'))
-    );
-    return;
+  // 🚫 Не кэшировать API-запросы (allorigins, nationalbank и другие внешние источники)
+  if (
+    url.href.includes('allorigins.win') ||
+    url.href.includes('nationalbank.kz') ||
+    url.pathname.startsWith('/api/') || // твои внутренние API
+    event.request.method !== 'GET' ||
+    url.protocol.startsWith('chrome-extension') ||
+    url.protocol.startsWith('devtools')
+  ) {
+    return; // просто пропускаем
   }
 
+  // остальное — HTML, CSS, JS, шрифты — кэшируем
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return (
