@@ -1,10 +1,11 @@
-const CACHE_NAME = 'offline-cache-v6';
+const CACHE_NAME = 'offline-cache-v7';
 const OFFLINE_URLS = [
   '/offline.html',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/autonumeric@4.6.0',
 ];
 
+// Установка: кэшируем нужные файлы
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_URLS))
@@ -12,10 +13,20 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// Активация: удаляем старые кэши
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME) // оставить только актуальный
+          .map((name) => caches.delete(name))    // удалить устаревшие
+      );
+    }).then(() => clients.claim())
+  );
 });
 
+// Обработка запросов
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -31,7 +42,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 🎯 Отдельная обработка index.html: всегда свежая, fallback из кэша
+  // 📄 Отдельная обработка index.html
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -47,7 +58,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 📦 Статичные ресурсы: кэш + обновление
+  // 📦 Остальные ресурсы
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return (
